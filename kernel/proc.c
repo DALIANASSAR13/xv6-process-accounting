@@ -128,6 +128,7 @@ found:
   p->start_time = ticks;
   p->cputime=0;
   p->memsize=0;
+  p->peak_memsize=0'
   p->exit_status=0;
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
@@ -252,6 +253,12 @@ growproc(int n)
     sz = uvmdealloc(p->pagetable, sz, sz + n);
   }
   p->sz = sz;
+  ///update memory tracking
+  p->memsize = p->sz;
+  if(p->sz > p->peak_memsize){
+  p->peak_memsize = p->sz;
+  }
+  
   return 0;
 }
 

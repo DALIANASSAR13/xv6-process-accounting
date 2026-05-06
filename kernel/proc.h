@@ -107,6 +107,7 @@ struct proc {
   
  uint cputime;
  uint memsize;
+ unit peak_memsize;
  uint exit_status;
  uint start_time;
  uint end_time;
