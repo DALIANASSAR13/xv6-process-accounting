@@ -86,7 +86,8 @@ myproc(void)
   struct cpu *c = mycpu();
   struct proc *p = c->proc;
   pop_off();
-  return p;
+  
+return p;
 }
 
 int
@@ -146,6 +147,9 @@ found:
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
 
+//Initialize exit status for new process
+  p->exit_status = 0;
+
   return p;
 }
 
@@ -155,6 +159,9 @@ found:
 static void
 freeproc(struct proc *p)
 {
+//Preserve exit status before process is freed
+  int saved_exit = p->exit_status;
+
   if(p->trapframe)
     kfree((void*)p->trapframe);
   p->trapframe = 0;
@@ -169,6 +176,8 @@ freeproc(struct proc *p)
   p->killed = 0;
   p->xstate = 0;
   p->state = UNUSED;
+// Restore exit status so it can still be reported
+  p->exit_status = saved_exit;
 }
 
 // Create a user page table for a given process, with no user memory,
@@ -327,6 +336,9 @@ kexit(int status)
 
   if(p == initproc)
     panic("init exiting");
+
+// Capture exit status before process terminates
+  p->exit_status = status;
 
   // Close all open files.
   for(int fd = 0; fd < NOFILE; fd++){
