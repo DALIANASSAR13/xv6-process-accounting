@@ -6,7 +6,6 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "vm.h"
-
 uint64
 sys_exit(void)
 {
@@ -104,4 +103,33 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+uint64
+sys_getprocstats(void)
+{
+  // 1. Definition (Member 5 Task)
+  struct {
+    int pid;
+    int cpu_ticks;
+    uint64 mem_size;
+    int exit_status;
+  } st; 
+
+  uint64 addr;
+  struct proc *p = myproc();
+
+  // 2. Fetch argument
+  argaddr(0, &addr);
+
+  // 3. Collect Data (Reporting & Visibility)
+  st.pid = p->pid;
+  st.cpu_ticks = 0; // Temporary le7ad ma Member 2 y-khallas
+  st.mem_size = p->sz; // Memory Footprint
+  st.exit_status = p->xstate; // Exit Status
+
+  // 4. Hand over report to user
+  if(copyout(p->pagetable, addr, (char *)&st, sizeof(st)) < 0)
+    return -1;
+
+  return 0;
 }

@@ -195,9 +195,7 @@ UPROGS=\
 	$U/_logstress\
 	$U/_forphan\
 	$U/_dorphan\
-        $U/_lab6\
-        $U/_lab5\
-        
+        $U/_procreport\
 
 ifeq ($(LAB),util)
 UPROGS += \
