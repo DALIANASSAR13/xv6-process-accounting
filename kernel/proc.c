@@ -124,11 +124,14 @@ allocproc(void)
 found:
   p->pid = allocpid();
   p->state = USED;
-
-  p->start_time = ticks;
+  
   p->cputime=0;
   p->memsize=0;
   p->exit_status=0;
+  p->start_time=-1;
+  p->end_time=0;
+acquire(&tickslock);
+release(&tickslock);
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
     freeproc(p);
@@ -244,6 +247,7 @@ growproc(int n)
   struct proc *p = myproc();
 
   sz = p->sz;
+
   if(n > 0){
     if((sz = uvmalloc(p->pagetable, sz, sz + n, PTE_W)) == 0) {
       return -1;
@@ -252,6 +256,7 @@ growproc(int n)
     sz = uvmdealloc(p->pagetable, sz, sz + n);
   }
   p->sz = sz;
+  p->memsize=p->sz;
   return 0;
 }
 
@@ -328,15 +333,17 @@ void
 kexit(int status)
 {
   struct proc *p = myproc();
+  
 
   if(p == initproc)
     panic("init exiting");
-
+   p->exit_status=status;
+   p->end_time=ticks;
   // Close all open files.
   for(int fd = 0; fd < NOFILE; fd++){
     if(p->ofile[fd]){
-     p->end_time = ticks;
-     printf("PID= %d cpu = %d START= %d END= %d\n", p->pid, p->cputime, p->start_time, p->end_time);
+     
+    // printf("PID= %d cpu = %d START= %d END= %d\n", p->pid, p->cputime, p->start_time, p->end_time);
       struct file *f = p->ofile[fd];
       fileclose(f);
       p->ofile[fd] = 0;
@@ -429,7 +436,7 @@ scheduler(void)
 {
   struct proc *p;
   struct cpu *c = mycpu();
-
+     
   c->proc = 0;
   for(;;){
     // The most recent process to run may have had interrupts
@@ -443,20 +450,27 @@ scheduler(void)
     int found = 0;
     for(p = proc; p < &proc[NPROC]; p++) {
       acquire(&p->lock);
-      if(p->state == RUNNABLE) {
+          if(p->state == RUNNABLE) {
+            uint start =ticks;
+            p->state =RUNNING;
+            c->proc =p;
+           if(p->start_time == -1)
+             p->start_time=start;
+           swtch(&c->context, &p->context);
+          p->cputime += (ticks - start);
+      
+
+
         // Switch to chosen process.  It is the process's job
         // to release its lock and then reacquire it
-        // before jumping back to us.
-        uint start = ticks; 
-        p->state = RUNNING;
-        c->proc = p;
-        swtch(&c->context, &p->context);
-        p->cputime += (ticks - start);
-
+        //g back to us.
+        
         // Process is done running for now.
         // It should have changed its p->state before coming back.
-        c->proc = 0;
-        found = 1;
+        
+          c->proc = 0;
+         
+       // found = 1;
       }
       release(&p->lock);
     }

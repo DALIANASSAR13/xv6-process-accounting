@@ -104,11 +104,18 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
-  
- uint cputime;
- uint memsize;
- uint exit_status;
- uint start_time;
- uint end_time;
-
+  uint start_time;
+  uint end_time;
+uint cputime;
+uint memsize;
+uint exit_status;  
+ 
+};
+struct pinfo{
+uint pid;
+uint start_time;
+uint end_time;
+uint cputime;
+uint memsize;
+uint exit_status;  
 };

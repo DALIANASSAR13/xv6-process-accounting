@@ -7,6 +7,7 @@
 #include "proc.h"
 #include "vm.h"
 
+extern struct proc proc[NPROC];
 uint64
 sys_exit(void)
 {
@@ -100,8 +101,52 @@ sys_uptime(void)
 {
   uint xticks;
 
-  acquire(&tickslock);
+ acquire(&tickslock);
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+extern struct proc proc[NPROC];
+
+uint64
+sys_getprocinfo(void)
+{
+  int pid;
+  uint64 addr;
+
+  argint(0, &pid);
+  argaddr(1, &addr);
+
+  struct proc *p;
+  struct pinfo info;
+  int found = 0;
+
+  for(p = proc; p < &proc[NPROC]; p++){
+    acquire(&p->lock);
+
+    if(p->pid == pid){
+      info.pid = p->pid;
+      info.start_time = p->start_time;
+      info.end_time = p->end_time;
+      info.cputime = p->cputime;
+      info.memsize = p->memsize;          // IMPORTANT: use sz
+      info.exit_status = p->exit_status;
+
+      found = 1;
+      release(&p->lock);
+      break;
+    }
+
+    release(&p->lock);
+  }
+
+  if(!found)
+    return -1;
+
+  if(copyout(myproc()->pagetable, addr,
+             (char *)&info, sizeof(info)) < 0)
+    return -1;
+
+  return 0;
 }

@@ -1,5 +1,5 @@
 #define SBRK_ERROR ((char *)-1)
-
+#include "kernel/types.h"
 struct stat;
 
 // system calls
@@ -47,3 +47,16 @@ void printf(const char*, ...) __attribute__ ((format (printf, 1, 2)));
 // umalloc.c
 void* malloc(uint);
 void free(void*);
+
+struct pinfo;
+int getprocinfo(int pid,struct pinfo *info);
+
+
+struct pinfo{
+  int pid;
+  int cputime;
+  int memsize;
+  int start_time;
+  int end_time;
+  int exit_status;
+};
