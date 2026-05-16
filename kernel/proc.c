@@ -128,7 +128,7 @@ found:
   p->start_time = ticks;
   p->cputime=0;
   p->memsize=0;
-  p->peak_memsize=0'
+  p->peak_memsize=0;
   p->exit_status=0;
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
